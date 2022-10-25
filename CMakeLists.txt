@@ -183,9 +183,10 @@ if(Qt5Core_FOUND)
 	message(STATUS "	 includes:" ${Qt5Core_INCLUDE_DIRS})
 	find_package(Qt5Widgets REQUIRED)
 	find_package(Qt5Gui REQUIRED)
+	find_package(Qt5PrintSupport REQUIRED)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 	set(QT_INCLUDE_DIRS ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
-	set(QT_LIBRARIES Qt5::Gui Qt5::Widgets)
+	set(QT_LIBRARIES Qt5::Gui Qt5::Widgets Qt5::PrintSupport)
 	add_definitions(${Qt5Gui_DEFINITIONS} ${Qt5Widgets_DEFINITIONS})
 else()
 	find_package(Qt6Core QUIET)
@@ -350,6 +351,7 @@ set(DSView_SOURCES
     DSView/pv/dialogs/decoderoptionsdlg.cpp
     DSView/pv/utility/encoding.cpp
     DSView/pv/utility/path.cpp
+    qcustomplot/qcustomplot.cpp
 )
 
 set(DSView_HEADERS
@@ -441,6 +443,7 @@ set(DSView_HEADERS
     DSView/pv/dialogs/decoderoptionsdlg.h
     DSView/pv/utility/encoding.h
     DSView/pv/utility/path.h
+    qcustomplot/qcustomplot.h
 )
  
 #===============================================================================
@@ -580,6 +583,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${Boost_INCLUDE_DIRS}
 	${QT_INCLUDE_DIRS}
+	qcustomplot
 )
 
 

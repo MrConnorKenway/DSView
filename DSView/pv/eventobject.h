@@ -36,6 +36,7 @@ signals:
     void show_error(QString error);
     void capture_state_changed(int state);
     void data_updated();
+    void data_received(void *buf, quint64 len, quint64 ch_num);
     void device_attach();
     void device_detach();
 

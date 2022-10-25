@@ -131,6 +131,12 @@ void MainWindow::setup_ui()
 	_vertical_layout->setContentsMargins(0, 0, 0, 0);
 	setCentralWidget(_central_widget);
 
+    // Setup the QCustomPlot widget
+    _customPlot = new QCustomPlot;
+    _customPlot->xAxis->setRange(0, 1000);
+    _customPlot->setMinimumSize(500, 500);
+    _customPlot->show();
+
 	// Setup the sampling bar
     _sampling_bar = new toolbars::SamplingBar(_session, this);
     _sampling_bar->setObjectName("sampling_bar");
@@ -253,6 +259,7 @@ void MainWindow::setup_ui()
     connect(&_event, SIGNAL(data_updated()), this, SLOT(on_data_updated()));
     connect(&_event, SIGNAL(cur_snap_samplerate_changed()), this, SLOT(on_cur_snap_samplerate_changed()));
     connect(&_event, SIGNAL(receive_data_len(quint64)), this, SLOT(on_receive_data_len(quint64)));
+    connect(&_event, SIGNAL(data_received(void *, quint64, quint64)), this, SLOT(on_data_received(void *, quint64, quint64)));
 
 
     //view
@@ -610,6 +617,19 @@ void MainWindow::on_run_stop()
     switch(_session->get_capture_state()) {
     case SigSession::Init:
     case SigSession::Stopped:
+        if (_plot_data.isEmpty()) {
+            _plot_data.resize(1000);
+            for (int i = 0; i < 1000; ++i) {
+                _plot_data[i].key = i;
+            }
+        } else {
+            for (int i = 0; i < 1000; ++i) {
+                _plot_data[i].value = 0;
+            }
+        }
+        for (int i = 0; i < 16; ++i) {
+            _samples[i].clear();
+        }
         commit_trigger(false);
         _session->start_capture(false);
         _view->capture_init();
@@ -1546,9 +1566,68 @@ void MainWindow::device_setted(){
      _event.frame_ended(); //save call
  }
 
- void MainWindow::on_frame_ended()
- {
-     _view->receive_end();
+ void MainWindow::on_frame_ended() {
+   // find first non zero bit
+   size_t i = 0;
+   size_t period_cnt = 0;
+
+   while (true) {
+     while (i < _samples[0].size()) {
+       if (_samples[0][i] != 0) {
+         break;
+       }
+       ++i;
+     }
+     if (i == _samples[0].size()) {
+        break;
+     }
+
+     size_t period_start = i;
+     size_t period_start_bit = __builtin_ctzll(_samples[0][period_start]);
+     ++i; // we know that currently _samples[0][i] != 0
+     // find first all zero uint64
+     while (i < _samples[0].size()) {
+       if (_samples[0][i++] == 0) {
+         break;
+       }
+     }
+     if (i == _samples[0].size()) {
+        break;
+     }
+
+     // find second non zero bit
+     while (i < _samples[0].size()) {
+       if (_samples[0][i] != 0) {
+         break;
+       }
+       ++i;
+     }
+     if (i == _samples[0].size()) {
+        break;
+     }
+
+     size_t period_end = i;
+     size_t period_end_bit = __builtin_ctzll(_samples[0][period_end]);
+     // 64 - period_start_bit + period_end_bit + (period_end - period_start - 1) * 64
+     size_t period_sample_num = (period_end - period_start) * 64 + period_end_bit - period_start_bit;
+
+     size_t total_start_bit = period_start * 64 + period_start_bit;
+     for (int j = total_start_bit; j < period_end * 64 + period_end_bit; ++j) {
+        if (j - total_start_bit >= _plot_data.size()) {
+            break;
+        }
+        _plot_data[j - total_start_bit].value += (_samples[1][j / 64] >> (j % 64)) & 1;
+     }
+
+     dsv_dbg("period [#%d] num: %d", period_cnt++, period_sample_num);
+   }
+
+   _customPlot->addGraph();
+   _customPlot->yAxis->setRange(0, period_cnt * 1.1);
+   _customPlot->graph()->data()->set(_plot_data);
+   _customPlot->replot();
+   _customPlot->clearGraphs();
+   _view->receive_end();
  }
 
  void MainWindow::frame_began()
@@ -1594,8 +1673,23 @@ void MainWindow::receive_header(){
 
 }
 
-void MainWindow::data_received(){
+void MainWindow::data_received(void *buf, quint64 len, quint64 ch_num){
+    _event.data_received(buf, len, ch_num);
+}
 
+void MainWindow::on_data_received(void *buf, quint64 len, quint64 ch_num){
+    quint64 *signal_buf = (quint64 *)buf;
+
+    if (len % 8 != 0) {
+        dsv_dbg("len %ld is not divided by 8", len);
+        abort();
+    }
+
+    for (int i = 0; i < len / 8; ++i) {
+        int c = i % ch_num;
+        _samples[c].push_back(signal_buf[i]);
+    }
+    free(buf);
 }
 
 } // namespace pv

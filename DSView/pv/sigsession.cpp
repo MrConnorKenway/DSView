@@ -1005,9 +1005,13 @@ void SigSession::feed_in_logic(const sr_datafeed_logic &logic)
         return;
     }
 
-    receive_data(logic.length * 8 / get_ch_num(SR_CHANNEL_LOGIC));
+    uint64_t ch_num = get_ch_num(SR_CHANNEL_LOGIC);
+
+    receive_data(logic.length * 8 / ch_num);
     
-    _callback->data_received(); 
+    void *buf = malloc(logic.length);
+    memcpy(buf, logic.data, logic.length);
+    _callback->data_received(buf, logic.length, ch_num);
     
     _data_updated = true;
 }

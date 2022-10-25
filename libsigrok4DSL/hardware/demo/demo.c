@@ -669,6 +669,9 @@ static int config_list(int key, GVariant **data, const struct sr_dev_inst *sdi,
     return SR_OK;
 }
 
+uint64_t j = 0;
+
+// demo device generate random samples here
 static void samples_generator(uint16_t *buf, uint64_t size,
                               const struct sr_dev_inst *sdi,
                               struct demo_context *devc)
@@ -705,19 +708,32 @@ static void samples_generator(uint16_t *buf, uint64_t size,
     }
 
     if (sdi->mode == LOGIC) {
+        const int half_period = 500;
         for (i = 0; i < size; i++) {
             //index = (i/10/g_slist_length(sdi->channels)+start_rand)%len;
             //*(buf + i) = (uint16_t)(((const_dc+pre_buf[index]) << 8) + (const_dc+pre_buf[index]));
-            tmp_u16 = 0;
-            if (i < ch_num*4)
-                *(buf + i) = tmp_u16;
-            else if (i % 4 == 0) {
-                start_rand = rand() % (ch_num * 4);
-                if (start_rand == (i/4 % ch_num))
-                    tmp_u16 = 0xffff;
-                *(buf + i) = tmp_u16 ? ~*(buf + i - ch_num*4) : *(buf + i - ch_num*4);
+            if ((i / 4) % ch_num == 0) {
+                if ((j / half_period) % 2 == 0) {
+                    if (j == 2000) {
+                        j = 0;
+                    }
+                    if (j == 496) {
+                        *(buf + i) = 0x000f;
+                    } else if (j == 1488) {
+                        *(buf + i) = 0x0fff;
+                    } else {
+                        *(buf + i) = 0xffff;
+                    }
+                } else {
+                    if (j == 992) {
+                        *(buf + i) = 0xff00;
+                    } else {
+                        *(buf + i) = 0;
+                    }
+                }
+                j += 16;
             } else {
-                *(buf + i) = *(buf + i - 1);
+                *(buf + i) = rand() & 0xffff;
             }
         }
     } else {
@@ -1043,6 +1059,7 @@ static int hw_dev_acquisition_start(struct sr_dev_inst *sdi,
 	/* Send header packet to the session bus. */
     //std_session_send_df_header(cb_data, LOG_PREFIX);
     std_session_send_df_header(sdi, LOG_PREFIX);
+    j = 0;
 
     if (!(devc->buf = g_try_malloc(((sdi->mode == DSO ) ? DSO_BUFSIZE : (sdi->mode == ANALOG ) ? 2*BUFSIZE : BUFSIZE)*sizeof(uint16_t)))) {
         sr_err("buf for receive_data malloc failed.");

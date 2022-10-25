@@ -164,6 +164,7 @@ void MainFrame::closeEvent(QCloseEvent *event)
 {
     writeSettings();
     _mainWindow->session_save();
+    _mainWindow->close_custom_plot();
     event->accept();
 }
 

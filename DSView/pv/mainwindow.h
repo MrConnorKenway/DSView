@@ -32,6 +32,8 @@
 #include "eventobject.h"
 #include "interface/uicallback.h"
 
+#include "qcustomplot.h"
+
 class QAction;
 class QMenuBar;
 class QMenu;
@@ -131,6 +133,7 @@ private slots:
     void on_decode_done();
     void on_receive_data_len(quint64 len);
     void on_cur_snap_samplerate_changed();
+    void on_data_received(void *buf, quint64 len, quint64 ch_num);
   
 signals:
     void prgRate(int progress);
@@ -142,6 +145,11 @@ public:
 //ISessionCallback
 public:
     void session_save(); 
+
+public:
+    inline void close_custom_plot() {
+        _customPlot->close();
+    }
 
     //ISessionDataGetter
 private:
@@ -172,7 +180,7 @@ private:
     void decode_done();
     void receive_data_len(quint64 len);
     void receive_header();    
-    void data_received();
+    void data_received(void *buf, quint64 len, quint64 ch_num);
 
     //------private
     bool gen_session_json(QJsonObject &sessionVar);
@@ -200,6 +208,10 @@ private:
 
 	QWidget                 *_central_widget;
 	QVBoxLayout             *_vertical_layout;
+
+	QCustomPlot             *_customPlot;
+	QVector<quint64>        _samples[16];
+	QVector<QCPGraphData>   _plot_data;
 
 	toolbars::SamplingBar   *_sampling_bar;
     toolbars::TrigBar       *_trig_bar;
