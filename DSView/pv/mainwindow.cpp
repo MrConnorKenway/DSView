@@ -135,8 +135,7 @@ void MainWindow::setup_ui()
     _customPlot = new QCustomPlot;
     _customPlot->setInteraction(QCP::iRangeDrag, true);
     _customPlot->setInteraction(QCP::iRangeZoom, true);
-    _customPlot->xAxis->setRange(0, 1000);
-    _customPlot->setMinimumSize(500, 500);
+    _customPlot->setMinimumSize(1024, 576);
     _customPlot->show();
 
 	// Setup the sampling bar
@@ -616,18 +615,39 @@ void MainWindow::device_changed(bool close)
 void MainWindow::on_run_stop()
 { 
     SigSession *_session = _control->GetSession();
+    auto ch_num = _session->get_ch_num(SR_CHANNEL_LOGIC);
 
     switch(_session->get_capture_state()) {
     case SigSession::Init:
     case SigSession::Stopped:
-        if (_plot_data.isEmpty()) {
-            _plot_data.resize(1000);
-            for (int i = 0; i < 1000; ++i) {
-                _plot_data[i].key = i;
+        _customPlot->clearGraphs();
+        _customPlot->plotLayout()->clear();
+        for (int i = 0; i < ch_num - 1; ++i) {
+            _subRect[i] = new QCPAxisRect(_customPlot, true);
+            _subRect[i]->axis(QCPAxis::atBottom)->setRange(0, 1000);
+            _customPlot->plotLayout()->addElement(i / 4, i % 4, _subRect[i]);
+        }
+        for (QCPAxisRect *rect : _customPlot->axisRects()) {
+            for (QCPAxis *axis: rect->axes()) {
+                axis->setLayer("axes");
+                axis->grid()->setLayer("grid");
             }
-        } else {
-            for (int i = 0; i < 1000; ++i) {
-                _plot_data[i].value = 0;
+        }
+        for (int i = 0; i < ch_num - 1; ++i) {
+            _customPlot->addGraph(_subRect[i]->axis(QCPAxis::atBottom), _subRect[i]->axis(QCPAxis::atLeft));
+        }
+
+        _plot_data.resize(ch_num);
+        for (int c = 1; c < ch_num; ++c) {
+            if (_plot_data[c].isEmpty()) {
+                _plot_data[c].resize(1000);
+                for (int i = 0; i < 1000; ++i) {
+                    _plot_data[c][i].key = i;
+                }
+            } else {
+                for (int i = 0; i < 1000; ++i) {
+                    _plot_data[c][i].value = 0;
+                }
             }
         }
         for (int i = 0; i < 16; ++i) {
@@ -1624,27 +1644,33 @@ void MainWindow::device_setted(){
      size_t period_sample_num = (period_end - period_start) * 64 + period_end_bit - period_start_bit;
 
      size_t total_start_bit = period_start * 64 + period_start_bit;
-     for (int j = total_start_bit; j < period_end * 64 + period_end_bit; ++j) {
-        if (j - total_start_bit >= _plot_data.size()) {
-            break;
+     // _plot_data.size() == ch_num
+     for (int c = 1; c < _plot_data.size(); ++c) {
+        for (int j = total_start_bit; j < period_end * 64 + period_end_bit; ++j) {
+            if (j - total_start_bit >= _plot_data[c].size()) {
+                break;
+            }
+            _plot_data[c][j - total_start_bit].value += (_samples[c][j / 64] >> (j % 64)) & 1;
         }
-        _plot_data[j - total_start_bit].value += (_samples[1][j / 64] >> (j % 64)) & 1;
      }
 
      dsv_dbg("period [#%d] num: %d", period_cnt++, period_sample_num);
    }
 
-   int max_y = 0;
-   for (auto kv : _plot_data) {
-     if (kv.value > max_y) {
-       max_y = kv.value;
+   for (int c = 1, i = 0; c < _plot_data.size(); ++c, ++i) {
+     int max_y = 0;
+     for (auto kv : _plot_data[c]) {
+       if (kv.value > max_y) {
+         max_y = kv.value;
+       }
      }
+     _subRect[i]->axis(QCPAxis::atLeft)->setRange(0, max_y);
    }
 
-   _customPlot->clearGraphs();
-   _customPlot->addGraph();
-   _customPlot->yAxis->setRange(0, max_y);
-   _customPlot->graph()->data()->set(_plot_data);
+   for (int c = 1, i = 0; c < _plot_data.size(); ++c, ++i) {
+     _customPlot->graph(i)->data()->set(_plot_data[c]);
+     _customPlot->graph(i)->rescaleAxes();
+   }
    _customPlot->replot();
    _view->receive_end();
  }

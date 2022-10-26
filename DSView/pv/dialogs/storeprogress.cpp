@@ -254,7 +254,7 @@ void StoreProgress::export_run()
     show();
 }
 
-void StoreProgress::export_processed_run(QVector<QCPGraphData> plot_data)
+void StoreProgress::export_processed_run(QVector<QVector<QCPGraphData>> plot_data)
 {
     _isExport = true;
     _isExportProcessed = true;

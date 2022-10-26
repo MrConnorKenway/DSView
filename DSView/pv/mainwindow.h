@@ -210,9 +210,10 @@ private:
 	QWidget                 *_central_widget;
 	QVBoxLayout             *_vertical_layout;
 
-	QCustomPlot             *_customPlot;
-	QVector<quint64>        _samples[16];
-	QVector<QCPGraphData>   _plot_data;
+	QCustomPlot                      *_customPlot;
+    QCPAxisRect                      *_subRect[16];
+	QVector<quint64>                 _samples[16];
+	QVector<QVector<QCPGraphData>>   _plot_data;
 
 	toolbars::SamplingBar   *_sampling_bar;
     toolbars::TrigBar       *_trig_bar;

@@ -642,11 +642,20 @@ bool StoreSession::export_processed_start() {
     QTextStream out(&file); 
     encoding::set_utf8(out);
 
-    out << "total size: " << _plot_data.size() << "\n";
-    for (auto kv : _plot_data) {
-        out << kv.key << "," << kv.value << "\n";
+    _units_stored = 0;
+    _unit_count = _plot_data.size() - 1;
+
+    out << "Channel number: " << _plot_data.size() - 1 << "\n\n";
+
+    for (int c = 1; c < _plot_data.size(); ++c) {
+        out << "Channel " << c << " total size: " << _plot_data[c].size() << "\n";
+        for (auto kv : _plot_data[c]) {
+            out << kv.key << "," << kv.value << "\n";
+        }
+        out << "\n";
+        _units_stored += 1;
+        progress_updated();
     }
-    progress_updated();
     file.close();
     return true;
 }

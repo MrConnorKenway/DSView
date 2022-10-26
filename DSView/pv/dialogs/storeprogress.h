@@ -67,7 +67,7 @@ signals:
 public slots:
     void save_run(ISessionDataGetter *getter);
     void export_run();
-    void export_processed_run(QVector<QCPGraphData> plot_data);
+    void export_processed_run(QVector<QVector<QCPGraphData>> plot_data);
 
 private slots:
 	void on_progress_updated();

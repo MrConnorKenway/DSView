@@ -104,7 +104,7 @@ signals:
 
 public:
    ISessionDataGetter   *_sessionDataGetter;
-   QVector<QCPGraphData> _plot_data;
+   QVector<QVector<QCPGraphData>> _plot_data;
 
 private:
     QString         _file_name;
