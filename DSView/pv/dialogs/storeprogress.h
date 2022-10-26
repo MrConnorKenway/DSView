@@ -28,6 +28,8 @@
 #include "../dialogs/dsdialog.h" 
 #include "../interface/icallbacks.h"
 
+#include "qcustomplot.h"
+
 class QTextEdit;
 class QRadioButton;
 class QGridLayout;
@@ -65,6 +67,7 @@ signals:
 public slots:
     void save_run(ISessionDataGetter *getter);
     void export_run();
+    void export_processed_run(QVector<QCPGraphData> plot_data);
 
 private slots:
 	void on_progress_updated();
@@ -78,6 +81,7 @@ private:
     QProgressBar        _progress;
     bool                _done;
     bool                _isExport;
+    bool                _isExportProcessed;
     QTextEdit           *_fileLab;
     QRadioButton        *_ckOrigin;
     QRadioButton        *_ckCompress;

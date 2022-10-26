@@ -32,6 +32,7 @@
 #include "interface/icallbacks.h"
 
 #include "ZipMaker.h"
+#include "qcustomplot.h"
 
 namespace pv {
 
@@ -67,6 +68,8 @@ public:
 
     bool export_start();
 
+    bool export_processed_start();
+
 	void wait();
 
 	void cancel();
@@ -83,6 +86,7 @@ public:
     bool load_decoders(dock::ProtocolDock *widget, QJsonArray dec_array);
     QString MakeSaveFile(bool bDlg);
     QString MakeExportFile(bool bDlg);
+    QString MakeExportProcessedFile(bool dDlg);
 
     inline QString GetFileName()
         { return _file_name;}
@@ -100,6 +104,7 @@ signals:
 
 public:
    ISessionDataGetter   *_sessionDataGetter;
+   QVector<QCPGraphData> _plot_data;
 
 private:
     QString         _file_name;

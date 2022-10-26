@@ -636,6 +636,21 @@ bool StoreSession::export_start()
     return false;
 }
 
+bool StoreSession::export_processed_start() {
+    QFile file(_file_name);
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&file); 
+    encoding::set_utf8(out);
+
+    out << "total size: " << _plot_data.size() << "\n";
+    for (auto kv : _plot_data) {
+        out << kv.key << "," << kv.value << "\n";
+    }
+    progress_updated();
+    file.close();
+    return true;
+}
+
 void StoreSession::export_proc(data::Snapshot *snapshot)
 {
     assert(snapshot);
@@ -1331,6 +1346,64 @@ QString StoreSession::MakeExportFile(bool bDlg)
 
     _file_name = default_name;
     return default_name;    
+}
+
+QString StoreSession::MakeExportProcessedFile(bool bDlg)
+{
+    QString default_name;
+
+    AppConfig &app = AppConfig::Instance(); 
+    if (app._userHistory.exportDir != "")
+    {
+        default_name = app._userHistory.exportDir + "/"  + _session->get_device()->name() + "-";
+    } 
+    else{
+        QDir _dir;
+        QString _root = _dir.home().path();                
+        default_name =  _root + "/" + _session->get_device()->name() + "-";
+    } 
+
+    for (const GSList *l = _session->get_device()->get_dev_mode_list();
+         l; l = l->next) {
+        const sr_dev_mode *mode = (const sr_dev_mode *)l->data;
+        if (_session->get_device()->dev_inst()->mode == mode->mode) {
+            default_name += mode->acronym;
+            break;
+        }
+    }
+
+    default_name += _session->get_session_time().toString("-yyMMdd-hhmmss");
+
+    // Show the dialog
+    if (bDlg)
+    {
+        default_name = QFileDialog::getSaveFileName(
+            NULL,
+            tr("Export Processed Data"),
+            default_name,
+            tr("Comma Seperated Values (*.csv)"));
+
+        if (default_name.isEmpty())
+        {
+            return ""; //no select file
+        }
+
+        QString _dir_path = path::GetDirectoryName(default_name);
+
+        if (_dir_path != app._userHistory.exportDir)
+        {
+            app._userHistory.exportDir = _dir_path;
+            app.SaveHistory();
+        }
+    }
+
+    QFileInfo f(default_name);
+    if (f.suffix().compare("csv"))
+    {
+        default_name.append(tr(".csv"));
+    }
+    _file_name = default_name;
+    return default_name;     
 }
 
 bool StoreSession::IsLogicDataType()

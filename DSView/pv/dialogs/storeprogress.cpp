@@ -48,6 +48,7 @@ StoreProgress::StoreProgress(SigSession *session, QWidget *parent) :
     _progress.setMaximum(100);
 
     _isExport = false;
+    _isExportProcessed = false;
     _done = false;
 
     QGridLayout *grid = new QGridLayout(); 
@@ -102,9 +103,13 @@ StoreProgress::~StoreProgress()
  void StoreProgress::on_change_file()
  {
     QString file  = "";
-    if (_isExport)
-        file = _store_session.MakeExportFile(true);
-    else
+    if (_isExport) {
+        if (_isExportProcessed) {
+            file = _store_session.MakeExportProcessedFile(true);
+        } else {
+            file = _store_session.MakeExportFile(true);
+        }
+    } else
         file = _store_session.MakeSaveFile(true);
 
     if (file != ""){
@@ -145,7 +150,7 @@ void StoreProgress::accept()
      _space->setVisible(true);
 
 
-    if (_isExport && _store_session.IsLogicDataType()){
+    if (_isExport && _store_session.IsLogicDataType() && !_isExportProcessed){
         bool ck  = _ckOrigin->isChecked();
         AppConfig &app = AppConfig::Instance();
         if (app._appOptions.originalData != ck){
@@ -156,13 +161,22 @@ void StoreProgress::accept()
 
     //start done 
     if (_isExport){
-        if (_store_session.export_start()){
-              QTimer::singleShot(100, this, SLOT(timeout()));        
-        }
-        else{
+        if (_isExportProcessed) {
+          if (_store_session.export_processed_start()) {
+            QTimer::singleShot(100, this, SLOT(timeout()));
+          } else {
             save_done();
-            close(); 
+            close();
             show_error();
+          }
+        } else {
+          if (_store_session.export_start()) {
+            QTimer::singleShot(100, this, SLOT(timeout()));
+          } else {
+            save_done();
+            close();
+            show_error();
+          }
         }
     }
     else{
@@ -226,6 +240,7 @@ void StoreProgress::export_run()
     }
 
     _isExport = true;
+    _isExportProcessed = false;
     setTitle(tr("Exporting..."));
     QString file = _store_session.MakeExportFile(false);
     _fileLab->setText(file); 
@@ -235,6 +250,19 @@ void StoreProgress::export_run()
             _ckOrigin->setVisible(bFlag);
             _ckCompress->setVisible(bFlag);
      }
+
+    show();
+}
+
+void StoreProgress::export_processed_run(QVector<QCPGraphData> plot_data)
+{
+    _isExport = true;
+    _isExportProcessed = true;
+    _store_session._plot_data = plot_data;
+
+    setTitle(tr("Exporting Processed Data..."));
+    QString file = _store_session.MakeExportProcessedFile(false);
+    _fileLab->setText(file); 
 
     show();
 }

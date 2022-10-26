@@ -284,6 +284,7 @@ void MainWindow::setup_ui()
     connect(_file_bar, SIGNAL(sig_load_file(QString)), this, SLOT(on_load_file(QString)));
     connect(_file_bar, SIGNAL(sig_save()), this, SLOT(on_save()));
     connect(_file_bar, SIGNAL(sig_export()), this, SLOT(on_export()));
+    connect(_file_bar, SIGNAL(sig_export_processed()), this, SLOT(on_export_processed()));
     connect(_file_bar, SIGNAL(sig_screenShot()), this, SLOT(on_screenShot()), Qt::QueuedConnection);
     connect(_file_bar, SIGNAL(sig_load_session(QString)), this, SLOT(on_load_session(QString)));
     connect(_file_bar, SIGNAL(sig_store_session(QString)), this, SLOT(on_store_session(QString)));
@@ -971,6 +972,15 @@ void MainWindow::on_export()
 
     StoreProgress *dlg = new StoreProgress(_session, this);
     dlg->export_run();
+}
+
+void MainWindow::on_export_processed()
+{
+    using pv::dialogs::StoreProgress;
+    SigSession *_session = _control->GetSession();
+
+    StoreProgress *dlg = new StoreProgress(_session, this);
+    dlg->export_processed_run(_plot_data);
 }
 
 bool MainWindow::on_load_session(QString name)

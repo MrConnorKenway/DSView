@@ -60,6 +60,7 @@ signals:
     void sig_load_file(QString); 
     void sig_save();
     void sig_export();
+    void sig_export_processed();
     void sig_screenShot(); //post screen capture event message
     void sig_load_session(QString); //post load session event message
     void sig_store_session(QString); //post store session event message
@@ -87,6 +88,7 @@ private:
     QAction *_action_open;
     QAction *_action_save;
     QAction *_action_export;
+    QAction *_action_export_processed;
     QAction *_action_capture;
 };
 

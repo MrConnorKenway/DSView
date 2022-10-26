@@ -68,6 +68,9 @@ FileBar::FileBar(SigSession *session, QWidget *parent) :
     _action_export = new QAction(this);
     _action_export->setObjectName(QString::fromUtf8("actionExport"));
      
+    _action_export_processed = new QAction(this);
+    _action_export_processed->setObjectName(QString::fromUtf8("actionExportProcessed"));
+     
     _action_capture = new QAction(this);
     _action_capture->setObjectName(QString::fromUtf8("actionCapture"));
  
@@ -79,6 +82,7 @@ FileBar::FileBar(SigSession *session, QWidget *parent) :
     _menu->addAction(_action_open);
     _menu->addAction(_action_save);
     _menu->addAction(_action_export);
+    _menu->addAction(_action_export_processed);
     _menu->addAction(_action_capture);
     _file_button.setMenu(_menu);
     addWidget(&_file_button);
@@ -91,6 +95,7 @@ FileBar::FileBar(SigSession *session, QWidget *parent) :
     connect(_action_open, SIGNAL(triggered()), this, SLOT(on_actionOpen_triggered()));
     connect(_action_save, SIGNAL(triggered()), this, SIGNAL(sig_save()));
     connect(_action_export, SIGNAL(triggered()), this, SIGNAL(sig_export()));
+    connect(_action_export_processed, SIGNAL(triggered()), this, SIGNAL(sig_export_processed()));
     connect(_action_capture, SIGNAL(triggered()), this, SLOT(on_actionCapture_triggered()));
 }
 
@@ -113,6 +118,7 @@ void FileBar::retranslateUi()
     _action_open->setText(tr("&Open..."));
     _action_save->setText(tr("&Save..."));
     _action_export->setText(tr("&Export..."));
+    _action_export_processed->setText(tr("Export Processed Data..."));
     _action_capture->setText(tr("&Capture..."));
 }
 
@@ -127,6 +133,7 @@ void FileBar::reStyle()
     _action_open->setIcon(QIcon(iconPath+"/open.svg"));
     _action_save->setIcon(QIcon(iconPath+"/save.svg"));
     _action_export->setIcon(QIcon(iconPath+"/export.svg"));
+    _action_export_processed->setIcon(QIcon(iconPath+"/export.svg"));
     _action_capture->setIcon(QIcon(iconPath+"/capture.svg"));
     _file_button.setIcon(QIcon(iconPath+"/file.svg"));
 }
