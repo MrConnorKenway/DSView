@@ -133,6 +133,8 @@ void MainWindow::setup_ui()
 
     // Setup the QCustomPlot widget
     _customPlot = new QCustomPlot;
+    _customPlot->setInteraction(QCP::iRangeDrag, true);
+    _customPlot->setInteraction(QCP::iRangeZoom, true);
     _customPlot->xAxis->setRange(0, 1000);
     _customPlot->setMinimumSize(500, 500);
     _customPlot->show();
@@ -1622,11 +1624,18 @@ void MainWindow::device_setted(){
      dsv_dbg("period [#%d] num: %d", period_cnt++, period_sample_num);
    }
 
+   int max_y = 0;
+   for (auto kv : _plot_data) {
+     if (kv.value > max_y) {
+       max_y = kv.value;
+     }
+   }
+
+   _customPlot->clearGraphs();
    _customPlot->addGraph();
-   _customPlot->yAxis->setRange(0, period_cnt * 1.1);
+   _customPlot->yAxis->setRange(0, max_y);
    _customPlot->graph()->data()->set(_plot_data);
    _customPlot->replot();
-   _customPlot->clearGraphs();
    _view->receive_end();
  }
 
