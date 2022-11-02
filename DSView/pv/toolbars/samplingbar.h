@@ -150,11 +150,18 @@ namespace pv
             QAction             *_instant_action;
             QAction             *_mode_action;
             QToolButton         _mode_button;
+            QAction             *_revert_action;
+            QToolButton         _revert_button;
 
             QMenu               *_mode_menu;
             QAction             *_action_repeat;
             QAction             *_action_single;
             bool                _instant;
+
+            QMenu               *_revert_menu;
+            QAction             *_action_normal;
+            QAction             *_action_revert;
+            bool                _is_reverted;
         };
 
     } // namespace toolbars

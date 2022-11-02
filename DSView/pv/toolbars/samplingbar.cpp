@@ -66,6 +66,7 @@ SamplingBar::SamplingBar(SigSession *session, QWidget *parent) :
     _run_stop_button(this),
     _instant_button(this),
     _mode_button(this),
+    _revert_button(this),
     _instant(false)
 {
     setMovable(false);
@@ -73,6 +74,7 @@ SamplingBar::SamplingBar(SigSession *session, QWidget *parent) :
     layout()->setSpacing(0);
  
     _mode_button.setPopupMode(QToolButton::InstantPopup);
+    _revert_button.setPopupMode(QToolButton::InstantPopup);
 
     _device_selector.setSizeAdjustPolicy(DsComboBox::AdjustToContents);
     _sample_rate.setSizeAdjustPolicy(DsComboBox::AdjustToContents);
@@ -107,6 +109,15 @@ SamplingBar::SamplingBar(SigSession *session, QWidget *parent) :
 
     _mode_button.setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     _mode_action = addWidget(&_mode_button);
+
+    _action_normal = new QAction(this);
+    _action_revert = new QAction(this);
+    _revert_menu = new QMenu(this);
+    _revert_menu->addAction(_action_normal);
+    _revert_menu->addAction(_action_revert);
+    _revert_button.setMenu(_revert_menu);
+    _revert_button.setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    _revert_action = addWidget(&_revert_button);
 
     _run_stop_button.setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     _run_stop_action = addWidget(&_run_stop_button);
@@ -160,6 +171,7 @@ void SamplingBar::retranslateUi()
     }
     _configure_button.setText(tr("Options"));
     _mode_button.setText(tr("Mode"));
+    _revert_button.setText(tr("Revert"));
 
    sr_dev_inst *dev_c = _session->get_dev_inst_c();
 
@@ -179,6 +191,8 @@ void SamplingBar::retranslateUi()
 
     _action_single->setText(tr("&Single"));
     _action_repeat->setText(tr("&Repetitive"));
+    _action_normal->setText(tr("Normal"));
+    _action_revert->setText(tr("Revert"));
 }
 
 void SamplingBar::reStyle()
@@ -208,6 +222,8 @@ void SamplingBar::reStyle()
         QString iconPath = GetIconPath();
         _configure_button.setIcon(QIcon(iconPath+"/params.svg"));
         _mode_button.setIcon(_session->get_run_mode() == pv::SigSession::Single ? QIcon(iconPath+"/modes.svg") :
+                                                                                 QIcon(iconPath+"/moder.svg"));
+        _revert_button.setIcon(_session->get_run_mode() == pv::SigSession::Single ? QIcon(iconPath+"/modes.svg") :
                                                                                  QIcon(iconPath+"/moder.svg"));
         _run_stop_button.setIcon(_sampling ? QIcon(iconPath+"/stop.svg") :
                                              QIcon(iconPath+"/start.svg"));
